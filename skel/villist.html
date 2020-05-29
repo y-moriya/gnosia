@@ -1,0 +1,116 @@
+<%
+completion = Array.new
+showdown = Array.new
+progress = Array.new
+preinitiation = Array.new
+vldb = PStore.new('db/vil.db')
+vldb.transaction do
+	break if (!vldb['recent_vid'])
+	recent_vid = vldb['recent_vid'].to_i
+	fid = 0
+	while (!File.exists?("db/vil#{fid}"))
+		fid = fid + 1
+	end
+	(recent_vid).downto(fid * 100 + 1) do |i|
+		vild = vldb["root#{i}"]
+		next if (!vild)
+		if (vild['state'] > 2)
+			if ((completion.size < 41 || @cgi['villist'] == 'all') && File.exists?("db/vil#{(i - 1) / 100}/#{i}.db"))
+				completion.push(vil_list(vild))
+			elsif (completion.size == 41)
+				completion.push(%Q(<tr><td colspan="10"><a href="?villist=all">すべての村を表示する。</a></td></tr>))
+			end
+		elsif (vild['state'] == 2)
+			showdown.push(vil_list(vild))
+		elsif (vild['state'] == 1)
+			progress.push(vil_list(vild))
+		else
+			preinitiation.push(vil_list(vild))
+		end
+	end
+end
+%>
+<table width="100%">
+<tr>
+	<td align="center">
+		<table class="main">
+		<tr>
+			<td class="center"><img src="<%= TOP_BANNER %>"></td>
+		</tr>
+		<tr>
+			<td class="caption">
+				<!--
+				<div class="credit">プライン Illustrated by namba　七彩 Illustrated by 七彩<br>アニマル Illustrated by silver25　悪夢(ame) Illustrated by amenohi<br>knight Illustrated by knight<br>ここの名前とか ideas by aseton</div>
+				<br>欧州、四国を中心に無許可でパクりました。<br>
+				ここのコンセプトは「欧州をコピーする」ですが、<br>
+				コピペ力が不足していたので思いっきり劣化コピーになっています。<br>
+				バグがてんこもりですので何がおこるかわかりません。<br>
+				パスワードの管理もいいかげんなので、<br>
+				他で使用しているパスワードなど、知られると困るパスワードは使用しないほうがいいです。<br>
+				ログや戦歴などはそのうち消えてしまうかもしれません。<br><br>
+
+				<a href="http://www26.atwiki.jp/yuri-mari/">wiki</a>らしいです。<br><br>
+
+				戦歴をたぶん直しました。<br><br>
+				<a href="http://kako.gob.jp/">過去ログ置き場</a><br>
+				-->
+				人狼天国を色々と開発したり改造したりするところです。
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<table class="menu">
+				<tr>
+					<td><div><a href="?cmd=doc"><%= SITE_NAME %>のこといろいろ</a></div></td>
+					<td><div><a href="?cmd=conf">ユーザ設定</a></div></td>
+					<td><div><a href="?cmd=userlist">ユーザ一覧</a></div></td>
+					<td><div><a href="pigeon.cgi">携帯版</a></div></td>
+				</tr>
+				<tr>
+					<td><div><a href="?cmd=char&set=plain">キャラ一覧</a></div></td>
+					<td><div><a href="?cmd=mkvil">村を作る</a></div></td>
+					<td><div><a href="?cmd=pscomp">編成投稿</a></div></td>
+					<td><div><a href="<%= BBS_URL %>">掲示板</a></div></td>
+				</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+		<form action="index.cgi" method="post">
+			<td class="right">
+<% if (@login.login) %>
+		<input type="hidden" name="cmd" value="logout">
+			<a href="?cmd=user&uid=<%= CGI.escape(@login.userid) %>"><%= @login.userid %></a>
+		<input type="submit" value="ログアウト" class="submit">
+<% else %>
+		<input type="hidden" name="cmd" value="login">
+		ID: <input type="text" name="userid" class="pass">
+		PASS: <input type="password" name="pass" class="pass">
+		<input type="submit" value="ログイン" class="submit">
+<% end %>
+			</td>
+		</form>
+		</tr>
+		<tr>
+			<td>
+				<table class="vil_index">
+				<tr><td colspan="10" class="vil_title">○ 募集中</td></tr>
+<%= preinitiation %>
+				<tr><td class="space"></td></tr>
+				<tr><td colspan="10" class="vil_title">○ 進行中</td></tr>
+<%= progress %>
+				<tr><td class="space"></td></tr>
+				<tr><td colspan="10" class="vil_title">○ 決着</td></tr>
+<%= showdown %>
+				<tr><td class="space"></td></tr>
+				<tr><td colspan="10" class="vil_title">○ 終了</td></tr>
+<%= completion %>
+				</table>
+			</td>
+		</tr>
+		</table>
+	</td>
+</tr>
+</table>
+<br>
+<br>
